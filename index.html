@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UuidMint — UUID Generator Online: v4, v7, Bulk &amp; Validator (GUID Tool)</title>
+<meta name="description" content="UuidMint is a free online UUID generator: create UUID v4 and time-ordered UUID v7, bulk-generate thousands with dedupe check, validate any UUID or GUID, and copy GUID presets like {braces}, uppercase or no-hyphens. No signup, 100% in-browser.">
+<link rel="canonical" href="https://uuidmint.example.com/">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: { colors: { mintbg:'#ECFDF5', tealbrand:'#0F766E', darkbrand:'#042F2E', mintcard:'#D1FAE5' } } }
+};
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a UUID and how is it generated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A UUID (Universally Unique Identifier) is a 128-bit label written as 32 hexadecimal digits in five groups separated by hyphens, e.g. 550e8400-e29b-41d4-a716-446655440000. The most common type, version 4, is generated from a cryptographically secure random number generator with the version and variant bits fixed per RFC 9562. Because 122 of the 128 bits are random, the chance of two v4 UUIDs colliding is effectively zero."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between UUID v4 and UUID v7?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "UUID v4 is fully random: 122 random bits with the version nibble set to 4. UUID v7 starts with a 48-bit Unix timestamp in milliseconds, then the version nibble 7, then 74 random bits. This means v7 UUIDs sort in chronological order — ideal for database primary keys because rows stay clustered together, while v4 UUIDs scatter randomly."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I validate a UUID string?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Paste it into UuidMint's validator tab. A valid UUID has the 8-4-4-4-12 hex pattern, a version nibble (1-8) and correct variant bits. The validator reports the version, the variant (RFC 9562, Microsoft, NCS or future-reserved), whether it is the nil UUID, and decodes the embedded timestamp for v7 UUIDs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the nil UUID?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The nil UUID is 00000000-0000-0000-0000-000000000000 — every bit set to zero. It is used as a placeholder or 'no value' sentinel in software and databases. UuidMint's validator flags it explicitly so you never mistake it for a real generated identifier."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are GUIDs and UUIDs the same thing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Effectively yes. GUID (Globally Unique Identifier) is Microsoft's name for the same 128-bit identifier that RFC 9562 calls a UUID. The only practical difference is formatting conventions: GUIDs are often written uppercase and wrapped in braces like {550E8400-E29B-41D4-A716-446655440000}. UuidMint's presets generate exactly these styles."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can two generated UUIDs ever collide?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In theory yes, in practice never. A version 4 UUID has 122 random bits — about 5.3 x 10^36 possible values. Even generating a billion UUIDs per second, you would need over a hundred years to reach even a 1% chance of a single collision. UuidMint's bulk mode still runs an automatic dedupe check on every batch so you can verify uniqueness yourself."
+      }
+    }
+  ]
+}
+</script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tabbtn.active { background:#0F766E; color:#fff; }
+  .blink { animation: blink 1.1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media print { .no-print { display:none !important; } }
+</style>
+</head>
+<body id="top" class="bg-mintbg text-slate-900 min-h-screen">
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-50 bg-darkbrand text-white shadow-lg">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-tealbrand text-mintbg font-black text-lg mono">#</span>
+      <span class="text-xl font-extrabold tracking-tight">Uuid<span class="text-teal-300">Mint</span></span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm font-medium">
+      <a href="#top" class="hover:text-teal-300 transition">Home</a>
+      <a href="https://fixoraa.tech" class="hover:text-teal-300 transition">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- TOP AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOOL ============ -->
+<main class="max-w-6xl mx-auto px-4 sm:px-6 pb-8">
+
+  <div class="text-center mt-6 mb-4">
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-darkbrand">UUID Generator &amp; Validator</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl mx-auto">Mint fresh UUID v4 and time-ordered UUID v7 identifiers, generate thousands in bulk with automatic dedupe, or paste any UUID/GUID to inspect its version, variant and timestamp.</p>
+    <div class="mt-3 inline-flex items-center gap-2">
+      <span class="inline-flex items-center gap-1.5 bg-tealbrand text-white text-xs font-bold px-3 py-1.5 rounded-full shadow">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Unlimited Free Usage
+      </span>
+      <span class="text-[11px] text-slate-500">No signup &middot; No paywall &middot; 100% in your browser</span>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <div class="flex flex-wrap justify-center gap-2 mb-5" role="tablist" aria-label="UuidMint tools">
+    <button class="tabbtn active px-5 py-2.5 rounded-full font-semibold text-sm bg-white border border-teal-200 text-teal-900 shadow-sm transition" data-tab="gen" role="tab">⚡ Generator</button>
+    <button class="tabbtn px-5 py-2.5 rounded-full font-semibold text-sm bg-white border border-teal-200 text-teal-900 shadow-sm transition" data-tab="bulk" role="tab">📦 Bulk (thousands)</button>
+    <button class="tabbtn px-5 py-2.5 rounded-full font-semibold text-sm bg-white border border-teal-200 text-teal-900 shadow-sm transition" data-tab="validate" role="tab">🔍 Validator</button>
+  </div>
+
+  <!-- ============ TAB: GENERATOR ============ -->
+  <section id="tab-gen" class="tabpane" role="tabpanel">
+    <div class="bg-darkbrand text-mintbg rounded-2xl shadow-xl overflow-hidden">
+      <div class="px-5 pt-5 pb-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-sm text-teal-200">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 blink inline-block"></span>
+          <span class="mono">uuidmint — live console</span>
+        </div>
+        <div class="flex gap-2" role="radiogroup" aria-label="UUID version">
+          <button class="verbtn px-4 py-1.5 rounded-full text-sm font-bold bg-tealbrand text-white" data-ver="4">v4 · random</button>
+          <button class="verbtn px-4 py-1.5 rounded-full text-sm font-bold bg-white/10 text-teal-100 hover:bg-white/20" data-ver="7">v7 · time-ordered</button>
+        </div>
+      </div>
+
+      <!-- hero UUID -->
+      <div class="px-5 pb-4">
+        <div id="heroUuid" class="mono text-center break-all text-lg sm:text-2xl md:text-3xl font-bold bg-black/30 border border-teal-700/60 rounded-xl px-4 py-6 select-all" aria-live="polite">— press “Mint a UUID” —</div>
+        <div id="heroMeta" class="text-center text-xs text-teal-300/80 mt-2 mono"></div>
+      </div>
+
+      <!-- format presets -->
+      <div class="px-5 pb-4">
+        <div class="text-xs uppercase tracking-widest text-teal-300/70 mb-2">GUID format presets</div>
+        <div class="flex flex-wrap gap-2" id="presetRow">
+          <button class="presetbtn px-3 py-1.5 rounded-lg text-xs font-semibold bg-tealbrand text-white" data-preset="canonical">Canonical</button>
+          <button class="presetbtn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-teal-100 hover:bg-white/20" data-preset="uppercase">UPPERCASE</button>
+          <button class="presetbtn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-teal-100 hover:bg-white/20" data-preset="braces">{braces}</button>
+          <button class="presetbtn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-teal-100 hover:bg-white/20" data-preset="nohyphens">no-hyphens</button>
+        </div>
+      </div>
+
+      <div class="px-5 pb-6 flex flex-wrap gap-3">
+        <button id="btnMint" class="flex-1 min-w-[160px] bg-tealbrand hover:bg-teal-600 text-white font-extrabold py-3 rounded-xl shadow transition text-base">⚡ Mint a UUID</button>
+        <button id="btnCopyHero" class="flex-1 min-w-[140px] bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl border border-teal-700 transition">📋 Copy</button>
+      </div>
+    </div>
+
+    <!-- v7 sort demo -->
+    <div class="mt-6 bg-white rounded-2xl shadow-lg border border-teal-100 overflow-hidden">
+      <div class="px-5 pt-5">
+        <h2 class="text-xl font-extrabold text-darkbrand">v7 sort-order demo <span class="text-sm font-medium text-slate-500">— why time-ordered IDs win</span></h2>
+        <p class="text-sm text-slate-600 mt-1">We mint 8 fresh UUIDs of each type, shuffle them, then sort them as plain strings. Watch the v7 list land back in <strong>exact creation order</strong> — the v4 list does not.</p>
+      </div>
+      <div class="px-5 py-4">
+        <button id="btnSortDemo" class="bg-darkbrand hover:bg-tealbrand text-white font-bold px-5 py-2.5 rounded-xl transition text-sm">▶ Run the demo</button>
+      </div>
+      <div id="sortDemoOut" class="px-5 pb-5 hidden">
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <div class="text-sm font-bold text-teal-800 mb-2">UUID v7 — sorted strings == chronological</div>
+            <ol id="v7List" class="mono text-[11px] sm:text-xs space-y-1.5 break-all"></ol>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-slate-600 mb-2">UUID v4 — sorted strings == random order</div>
+            <ol id="v4List" class="mono text-[11px] sm:text-xs space-y-1.5 break-all"></ol>
+          </div>
+        </div>
+        <div id="sortVerdict" class="mt-4 text-sm font-semibold rounded-xl px-4 py-3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB: BULK ============ -->
+  <section id="tab-bulk" class="tabpane hidden" role="tabpanel">
+    <div class="bg-white rounded-2xl shadow-xl border border-teal-100 overflow-hidden">
+      <div class="bg-darkbrand px-5 py-4">
+        <h2 class="text-xl font-extrabold text-white">Bulk generator <span class="text-teal-300 text-sm font-medium">— with automatic dedupe check</span></h2>
+      </div>
+      <div class="p-5">
+        <div class="flex flex-wrap items-end gap-4">
+          <label class="flex-1 min-w-[150px]">
+            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">How many? (1–10,000)</span>
+            <input id="bulkCount" type="number" min="1" max="10000" value="100" class="mt-1 w-full border-2 border-teal-200 rounded-xl px-3 py-2.5 mono font-bold text-darkbrand focus:outline-none focus:border-tealbrand">
+          </label>
+          <label class="min-w-[150px]">
+            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Version</span>
+            <select id="bulkVer" class="mt-1 w-full border-2 border-teal-200 rounded-xl px-3 py-2.5 font-semibold text-darkbrand focus:outline-none focus:border-tealbrand">
+              <option value="4">v4 · random</option>
+              <option value="7">v7 · time-ordered</option>
+            </select>
+          </label>
+          <button id="btnBulkGen" class="bg-tealbrand hover:bg-teal-600 text-white font-extrabold px-6 py-3 rounded-xl shadow transition">⚡ Generate</button>
+        </div>
+
+        <div id="bulkReport" class="hidden mt-4 grid grid-cols-3 gap-3 text-center"></div>
+
+        <textarea id="bulkOut" rows="10" readonly placeholder="Your batch will appear here, one UUID per line…" class="mt-4 w-full mono text-xs sm:text-sm border-2 border-teal-200 rounded-xl p-3 bg-mintbg/60 focus:outline-none" aria-label="Generated UUID batch"></textarea>
+
+        <div class="mt-3 flex flex-wrap gap-3">
+          <button id="btnBulkCopy" class="flex-1 min-w-[140px] bg-darkbrand hover:bg-tealbrand text-white font-bold py-2.5 rounded-xl transition text-sm">📋 Copy all</button>
+          <button id="btnBulkDownload" class="flex-1 min-w-[140px] bg-white hover:bg-mintcard text-darkbrand font-bold py-2.5 rounded-xl border-2 border-teal-200 transition text-sm">⬇ Download .txt</button>
+          <button id="btnBulkClear" class="px-5 bg-white hover:bg-red-50 text-slate-500 font-bold py-2.5 rounded-xl border-2 border-slate-200 transition text-sm">Clear</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB: VALIDATOR ============ -->
+  <section id="tab-validate" class="tabpane hidden" role="tabpanel">
+    <div class="bg-white rounded-2xl shadow-xl border border-teal-100 overflow-hidden">
+      <div class="bg-darkbrand px-5 py-4">
+        <h2 class="text-xl font-extrabold text-white">Paste to validate <span class="text-teal-300 text-sm font-medium">— version · variant · nil · v7 timestamp</span></h2>
+      </div>
+      <div class="p-5">
+        <textarea id="valInput" rows="5" placeholder="Paste one UUID per line — canonical, {braced}, UPPERCASE or 32-hex compact all work…" class="w-full mono text-xs sm:text-sm border-2 border-teal-200 rounded-xl p-3 bg-mintbg/60 focus:outline-none focus:border-tealbrand" aria-label="UUIDs to validate"></textarea>
+        <div class="mt-3 flex flex-wrap gap-3">
+          <button id="btnValidate" class="flex-1 min-w-[160px] bg-tealbrand hover:bg-teal-600 text-white font-extrabold py-3 rounded-xl shadow transition">🔍 Validate</button>
+          <button id="btnValSample" class="px-5 bg-white hover:bg-mintcard text-darkbrand font-bold py-3 rounded-xl border-2 border-teal-200 transition text-sm">Try sample values</button>
+          <button id="btnValClear" class="px-5 bg-white hover:bg-red-50 text-slate-500 font-bold py-3 rounded-xl border-2 border-slate-200 transition text-sm">Clear</button>
+        </div>
+        <div id="valOut" class="mt-4 space-y-3"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- BOTTOM AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="464498"></script>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SEO ARTICLE ============ -->
+<article id="seo-article" class="max-w-4xl mx-auto px-4 sm:px-6 pb-4 text-slate-700 leading-relaxed">
+  <h2 class="text-2xl font-extrabold text-darkbrand mb-4">UUID Generator Online: Everything You Need to Know About UUIDs, GUIDs, v4 and v7</h2>
+
+  <p class="mb-4">If you have ever built a database-backed application, integrated a third-party API, or distributed configuration across a fleet of servers, you have almost certainly met the 36-character string that looks like <span class="mono text-sm bg-mintcard px-1 rounded">550e8400-e29b-41d4-a716-446655440000</span>. That string is a UUID — a Universally Unique Identifier — and it is one of the quiet workhorses of modern software. This guide explains what UUIDs are, how the different versions work, when to pick version 4 versus the newer time-ordered version 7, how to validate them, and what the terms GUID, nil UUID, variant and canonical form actually mean. Along the way you can use the free UuidMint generator above to mint fresh identifiers, bulk-produce thousands of them, and inspect any UUID you paste in.</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">What is a UUID?</h3>
+  <p class="mb-4">A UUID is a 128-bit value — sixteen bytes — rendered as 32 hexadecimal digits arranged in five groups separated by hyphens: 8-4-4-4-12. The format was first standardized by the Open Software Foundation in the 1990s, carried forward by RFC 4122, and modernized in 2024 by RFC 9562, which is the current authoritative specification. The defining property of a UUID is right there in the name: it is meant to be <em>universally unique</em>. Two different systems, on opposite sides of the planet, with no communication between them, can each mint UUIDs and the probability that they ever mint the same one is so small that engineers simply ignore it.</p>
+  <p class="mb-4">That uniqueness-without-coordination property is the whole point. In the early days of computing, unique identifiers usually came from a single source of truth: an auto-incrementing integer column in a central database, a ticket server handing out serial numbers, a master process that everyone asked. That works until you have distributed systems — microservices in different regions, offline-first mobile apps that sync later, event streams processed by dozens of consumers. Coordinating a single counter across all of them is expensive and fragile. UUIDs flip the model: instead of guaranteeing uniqueness by asking permission, you guarantee it with mathematics. Pick 122 random bits (for version 4), and the space of possible values — roughly 5.3 × 10<sup>36</sup> — is so vast that accidental collisions do not happen in the lifetime of the universe, let alone your project.</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">UUID versions: v1 through v8</h3>
+  <p class="mb-4">The word "version" in UUID-land does not mean "the latest release of the standard". It means the <em>generation method</em>, encoded as a four-bit nibble in a fixed position (the first character of the third group — look at the <span class="mono text-sm bg-mintcard px-1 rounded">4</span> in <span class="mono text-sm bg-mintcard px-1 rounded">550e8400-e29b-41d4-a716-446655440000</span>). RFC 9562 defines eight versions. Version 1 encodes a timestamp plus a hardware (MAC) address; it is largely obsolete now because it leaks machine identity and is bad for privacy. Version 2 is a niche DCE variant rarely seen in the wild. Versions 3 and 5 are deterministic: feed a namespace UUID plus a name into MD5 (v3) or SHA-1 (v5) and you always get the same UUID back — useful when you need a stable identifier derived from existing data, such as hashing a URL into an ID column.</p>
+  <p class="mb-4">Version 4 is the one most developers mean when they say "generate a UUID": 122 bits of cryptographic randomness with the version nibble set to <span class="mono text-sm bg-mintcard px-1 rounded">4</span> and the two variant bits set to <span class="mono text-sm bg-mintcard px-1 rounded">10</span>. It is simple, private (no timestamp, no MAC address), and safe. Version 6 is a field-reordered variant of v1 that keeps timestamp bits in sortable order, mostly of interest to systems migrating away from v1. Version 7 is the modern answer to "I want a UUID that also sorts by creation time", and it deserves its own section. Version 8 is an escape hatch: the version and variant bits are fixed, but every other bit is application-defined, for specialized systems that want to embed things like tenant or shard identifiers inside a UUID-shaped column.</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">UUID v7: the time-ordered upgrade</h3>
+  <p class="mb-4">UUID v7 was added by RFC 9562 in 2024 and is rapidly becoming the default choice for database primary keys. Its bit layout is elegant: the first 48 bits are the Unix timestamp in milliseconds, big-endian; then the version nibble <span class="mono text-sm bg-mintcard px-1 rounded">7</span>; then 12 random bits; then the two variant bits; then 62 more random bits. Because the timestamp occupies the most significant bits, v7 UUIDs sort in chronological order when compared as plain strings. A v7 minted at noon sorts before one minted at 12:01 — no parsing required.</p>
+  <p class="mb-4">Why does that matter? Database indexes are trees, and inserting random keys into a tree (which is what v4 gives you) causes page splits, fragmentation, and slower inserts as the table grows. Inserting monotonically increasing keys — like v7, or classic auto-increment integers — keeps new rows clustered at the "end" of the index. Teams at companies running large PostgreSQL and MySQL fleets report meaningful insert-performance improvements after switching primary keys from v4 to v7, while keeping every benefit of decentralized ID generation. The 74 random bits per millisecond of entropy still make collisions and enumeration practically impossible, so v7 is not meaningfully more predictable than v4 for security purposes. Try the sort-order demo above to see the difference yourself: it mints both types, shuffles them, sorts the strings, and shows the v7 list snapping back into exact creation order.</p>
+  <p class="mb-4">One more v7 trick that developers love: because the timestamp is embedded in the first 48 bits, you can read the creation time straight out of the identifier. UuidMint's validator does exactly this — paste any v7 UUID and it decodes and displays the UTC timestamp it was minted at, down to the millisecond. This is handy for debugging ("when was this record created, roughly?"), for log correlation, and for building time-range queries directly on ID columns.</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">GUID vs UUID: is there a difference?</h3>
+  <p class="mb-4">Functionally, no. GUID — Globally Unique Identifier — is Microsoft's term for the same 128-bit identifier, used across Windows, .NET (<span class="mono text-sm bg-mintcard px-1 rounded">Guid.NewGuid()</span>), SQL Server's <span class="mono text-sm bg-mintcard px-1 rounded">uniqueidentifier</span> type, and COM. A GUID minted by .NET is a perfectly valid RFC 9562 UUID and vice versa; the bits are the same. The differences are purely conventional: GUIDs are usually displayed in uppercase and wrapped in braces, like <span class="mono text-sm bg-mintcard px-1 rounded">{550E8400-E29B-41D4-A716-446655440000}</span>, while the RFC canonical form is lowercase without braces. That is why UuidMint ships GUID presets — one click gives you the uppercase, braced, or hyphen-free rendering your platform expects, without regenerating the underlying identifier.</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">Anatomy of a UUID: version, variant, nil</h3>
+  <p class="mb-4">Three concepts show up in every validator, including the one on this page, so it is worth understanding them precisely. The <strong>version</strong> is the four-bit nibble at the start of the third group (character 15 in the canonical string, counting from 1). It tells you how the UUID was made: 4 means random, 7 means time-ordered, and so on. The <strong>variant</strong> is encoded in the top bits of the byte that begins the fourth group: the two-bit pattern <span class="mono text-sm bg-mintcard px-1 rounded">10</span> (hex digits 8, 9, a, or b in that position) means the UUID follows the RFC 9562 layout; patterns starting with <span class="mono text-sm bg-mintcard px-1 rounded">0</span> indicate the old Apollo NCS format, and <span class="mono text-sm bg-mintcard px-1 rounded">11</span> indicates the Microsoft-reserved variant. Almost everything you encounter in practice is the RFC variant.</p>
+  <p class="mb-4">The <strong>nil UUID</strong> — <span class="mono text-sm bg-mintcard px-1 rounded">00000000-0000-0000-0000-000000000000</span> — is the all-zeros special case. It is not random and not time-ordered; it is a sentinel meaning "no UUID here", used as a default value, a placeholder in test fixtures, or an explicit null in APIs that pass UUIDs around. A good validator flags it separately from genuinely invalid input, because "all zeros" is meaningful data in many systems, not a typo. (RFC 9562 also defines its mirror image, the <strong>max UUID</strong> with all bits set, used for range-query boundaries.)</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">Validating UUIDs: what a validator checks</h3>
+  <p class="mb-4">Paste a string into any UUID validator and it performs several checks in sequence. First, the shape: 32 hex digits in the 8-4-4-4-12 grouping, optionally accepting the compact 32-digit form, surrounding braces or parentheses, and either letter case. Second, the version nibble: is it a defined version (1–8)? Third, the variant bits: do they indicate a recognized layout? Fourth, special values: is it the nil UUID? A strict validator will reject strings with non-hex characters, wrong group lengths, missing hyphens in odd places, or version digits like <span class="mono text-sm bg-mintcard px-1 rounded">0</span> or <span class="mono text-sm bg-mintcard px-1 rounded">9</span> that do not correspond to any defined generation method. UuidMint's validator goes one step further and decodes the v7 timestamp when one is present, turning a bare identifier into a small forensic report.</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">Common UUID use cases</h3>
+  <p class="mb-4">Primary keys are the classic use case, and v7 has made them interesting again. Beyond that, UUIDs show up as session and API tokens, idempotency keys (send the same UUID with a retried request and the server knows it is a duplicate), distributed trace and correlation IDs that follow a request across microservices, filenames for user uploads (unguessable, collision-free), feature-flag and experiment identifiers, and seed data for tests and load benchmarks — which is where bulk generation with a dedupe check earns its keep. If you seed a test database with ten thousand v4 UUIDs, the mathematical chance of a duplicate is negligible, but running the automatic dedupe report costs nothing and turns "trust me" into "verified".</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">Collision math and entropy</h3>
+  <p class="mb-4">The numbers are worth internalizing because they explain why UUIDs are trusted at planetary scale. A version 4 UUID has 122 random bits: 2<sup>122</sup>, or about 5.3 × 10<sup>36</sup> possible values. If you generated one billion UUIDs every second, you would need roughly a hundred years to reach even a 50% chance of one collision. Version 7 keeps 74 random bits per millisecond timestamp — 2<sup>74</sup> possibilities per millisecond — which is still so large that same-millisecond collisions do not occur outside of adversarial construction. The practical takeaway: use <span class="mono text-sm bg-mintcard px-1 rounded">crypto.getRandomValues</span> (which UuidMint uses exclusively — never <span class="mono text-sm bg-mintcard px-1 rounded">Math.random</span>) as your randomness source, and uniqueness takes care of itself.</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">Formats, casing and storage tips</h3>
+  <p class="mb-4">The canonical text form is lowercase with hyphens, and most systems accept it case-insensitively — but not all. SQL Server's <span class="mono text-sm bg-mintcard px-1 rounded">uniqueidentifier</span> is forgiving; some NoSQL drivers and URL routers are pickier. A few practical rules: normalize to one case on ingest (lowercase is the RFC recommendation); strip braces before storing; store as a native UUID/binary(16) type in the database when available rather than as text, to save space and keep index comparisons fast; and never use a UUID as a security token by itself unless it was generated with a cryptographic RNG and is long enough to resist guessing — v4 qualifies, but pair it with proper authentication anyway. When an API demands no hyphens (32 continuous hex) or uppercase braced GUIDs, use the preset buttons above rather than hand-editing — hand-editing is exactly how invalid UUIDs are born.</p>
+
+  <h3 class="text-xl font-bold text-darkbrand mt-8 mb-3">Why UuidMint?</h3>
+  <p class="mb-4">Plenty of sites generate a single random UUID. UuidMint was built for the workflows developers actually have: minting time-ordered v7 identifiers for new database tables, producing thousands of seed IDs with a uniqueness report you can screenshot into a test plan, pasting a suspicious ID from a log and learning its version, variant and creation time in one glance, and copying GUID-style presets without retyping. Everything runs in your browser with the Web Crypto API — nothing is sent to any server — and there is no signup, no paywall and no watermark. Whether you searched for a uuid generator online, a guid generator, a uuid v4 generator, a uuid validator, or a way to generate uuid v7, you are in the right place: mint away.</p>
+
+  <!-- FAQs -->
+  <h2 class="text-2xl font-extrabold text-darkbrand mt-10 mb-4">Frequently Asked Questions</h2>
+  <div class="space-y-4">
+    <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm">
+      <h3 class="font-bold text-darkbrand">What is a UUID and how is it generated?</h3>
+      <p class="mt-1 text-sm">A UUID (Universally Unique Identifier) is a 128-bit label written as 32 hexadecimal digits in five hyphen-separated groups. Version 4, the most common type, is generated from a cryptographically secure random number generator with the version and variant bits fixed per RFC 9562, giving 122 random bits and a effectively-zero collision chance.</p>
+    </div>
+    <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm">
+      <h3 class="font-bold text-darkbrand">What is the difference between UUID v4 and UUID v7?</h3>
+      <p class="mt-1 text-sm">UUID v4 is fully random. UUID v7 starts with a 48-bit Unix millisecond timestamp followed by the version nibble 7 and 74 random bits, so v7 UUIDs sort in chronological order. That makes v7 the better choice for database primary keys (better index locality), while v4 remains perfect for opaque tokens and general-purpose IDs.</p>
+    </div>
+    <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm">
+      <h3 class="font-bold text-darkbrand">How do I validate a UUID string?</h3>
+      <p class="mt-1 text-sm">Paste it into UuidMint's Validator tab. It checks the 8-4-4-4-12 hex shape (accepting braced, uppercase and 32-hex compact forms), reports the version and variant, flags the nil UUID, and decodes the embedded timestamp for v7 UUIDs.</p>
+    </div>
+    <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm">
+      <h3 class="font-bold text-darkbrand">What is the nil UUID?</h3>
+      <p class="mt-1 text-sm">The nil UUID is 00000000-0000-0000-0000-000000000000 — all bits zero. It is a sentinel meaning "no value" used as a placeholder in databases, APIs and test fixtures. UuidMint's validator identifies it explicitly so you can distinguish it from malformed input.</p>
+    </div>
+    <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm">
+      <h3 class="font-bold text-darkbrand">Are GUIDs and UUIDs the same thing?</h3>
+      <p class="mt-1 text-sm">Effectively yes. GUID is Microsoft's name for the same 128-bit identifier. The only practical difference is formatting: GUIDs are conventionally uppercase and wrapped in braces, e.g. {550E8400-E29B-41D4-A716-446655440000}. UuidMint's presets produce exactly these styles.</p>
+    </div>
+    <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm">
+      <h3 class="font-bold text-darkbrand">Can two generated UUIDs ever collide?</h3>
+      <p class="mt-1 text-sm">In practice, no. A v4 UUID has 122 random bits — about 5.3 × 10³⁶ possible values. Even at a billion UUIDs per second you would need over a century to reach a 1% collision chance. UuidMint's bulk mode still runs an automatic dedupe check on every batch so you can verify uniqueness directly.</p>
+    </div>
+  </div>
+</article>
+
+<footer class="max-w-6xl mx-auto px-4 sm:px-6 py-8 text-center text-xs text-slate-500">
+  <p>UuidMint — free online UUID &amp; GUID generator, validator and bulk minting tool. All generation happens locally in your browser using the Web Crypto API.</p>
+  <p class="mt-2"><a href="#top" class="hover:text-tealbrand">Home</a> &middot; <a href="https://fixoraa.tech" class="hover:text-tealbrand">More Tools</a></p>
+</footer>
+
+<!-- ============ CORE LIB (inlined by build) ============ -->
+<script>
+/* UuidMint core logic — shared between uuidmint.html and uuidmint.test.js.
+ * Pure functions; the RNG is injectable so Node tests can pass a seeded one.
+ * RFC 9562: v4 = random with version nibble 0100 and variant 10;
+ *           v7 = 48-bit big-endian unix_ts_ms | ver 0111 | 12 rand | var 10 | 62 rand.
+ */
+'use strict';
+
+function defaultRng() {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) return crypto;
+  // Node fallback
+  var webcrypto = require('crypto').webcrypto;
+  return webcrypto;
+}
+
+function randBytes(n, rng) {
+  rng = rng || defaultRng();
+  var b = new Uint8Array(n);
+  rng.getRandomValues(b);
+  return b;
+}
+
+function bytesToHex(b) {
+  var out = '';
+  for (var i = 0; i < b.length; i++) {
+    var h = b[i].toString(16);
+    out += h.length === 1 ? '0' + h : h;
+  }
+  return out;
+}
+
+/* ---- v4 --------------------------------------------------------------- */
+function generateV4(rng) {
+  var b = randBytes(16, rng);
+  b[6] = (b[6] & 0x0f) | 0x40; // version 4
+  b[8] = (b[8] & 0x3f) | 0x80; // variant 10
+  var h = bytesToHex(b);
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20, 32);
+}
+
+/* ---- v7 --------------------------------------------------------------- */
+function generateV7(rng, nowMs) {
+  var ts = nowMs != null ? nowMs : Date.now();
+  ts = Math.floor(ts);
+  var b = new Uint8Array(16);
+  // 48-bit big-endian unix_ts_ms
+  var t = BigInt(ts) & 0xffffffffffffn;
+  for (var i = 0; i < 6; i++) {
+    b[i] = Number((t >> BigInt((5 - i) * 8)) & 0xffn);
+  }
+  var r = randBytes(10, rng);
+  // byte 6: version nibble 0111 (4 bits) + 4 random bits (rand_a high)
+  b[6] = 0x70 | (r[0] & 0x0f);
+  b[7] = r[1];
+  // byte 8: variant 10 + 6 random bits (rand_b high)
+  b[8] = 0x80 | (r[2] & 0x3f);
+  b[9] = r[3]; b[10] = r[4]; b[11] = r[5];
+  b[12] = r[6]; b[13] = r[7]; b[14] = r[8]; b[15] = r[9];
+  var h = bytesToHex(b);
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20, 32);
+}
+
+/* ---- canonicalization + analysis -------------------------------------- */
+var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function canonicalize(input) {
+  if (typeof input !== 'string') return null;
+  var s = input.trim();
+  // strip braces/parens/brackets wrapper if present
+  if (/^[{(\[]/.test(s) && /[})\]]$/.test(s)) s = s.slice(1, -1).trim();
+  s = s.toLowerCase();
+  if (/^[0-9a-f]{32}$/.test(s)) {
+    s = s.slice(0, 8) + '-' + s.slice(8, 12) + '-' + s.slice(12, 16) + '-' + s.slice(16, 20) + '-' + s.slice(20, 32);
+  }
+  if (!UUID_RE.test(s)) return null;
+  return s;
+}
+
+function versionName(v) {
+  var names = { 1: 'v1 (time-based)', 2: 'v2 (DCE security)', 3: 'v3 (MD5 name-based)', 4: 'v4 (random)', 5: 'v5 (SHA-1 name-based)', 6: 'v6 (reordered time)', 7: 'v7 (time-ordered)', 8: 'v8 (custom)' };
+  return names[v] || ('v' + v + ' (unassigned)');
+}
+
+function variantInfo(uuid) {
+  // uuid is canonical lowercase
+  var byte8 = parseInt(uuid.slice(19, 21), 16);
+  if (byte8 === 0 && uuid === '00000000-0000-0000-0000-000000000000') return { code: 'nil', label: 'Nil UUID' };
+  if ((byte8 & 0xc0) === 0x80) return { code: 'rfc', label: 'RFC 9562 (RFC 4122) — 10xx' };
+  if ((byte8 & 0xc0) === 0xc0) return { code: 'microsoft', label: 'Microsoft (reserved) — 11xx' };
+  if ((byte8 & 0x80) === 0x00) return { code: 'ncs', label: 'NCS (reserved) — 0xxx' };
+  return { code: 'future', label: 'Future (reserved) — 110x' };
+}
+
+function v7TimestampMs(uuid) {
+  // canonical lowercase v7: first 48 bits = unix_ts_ms big-endian
+  var hex = uuid.replace(/-/g, '');
+  var tsHex = hex.slice(0, 12);
+  return parseInt(tsHex, 16);
+}
+
+function analyze(input) {
+  var canonical = canonicalize(input);
+  if (!canonical) {
+    return { valid: false, input: input, reason: 'Not a valid UUID string (expected 8-4-4-4-12 hex, optionally wrapped in { } or as 32 hex digits).' };
+  }
+  var isNil = canonical === '00000000-0000-0000-0000-000000000000';
+  var version = parseInt(canonical[14], 16);
+  var variant = variantInfo(canonical);
+  var result = {
+    valid: true,
+    input: input,
+    canonical: canonical,
+    version: version,
+    versionLabel: isNil ? 'nil' : versionName(version),
+    variant: variant.code,
+    variantLabel: variant.label,
+    isNil: isNil
+  };
+  if (!isNil && version === 7 && variant.code === 'rfc') {
+    result.timestampMs = v7TimestampMs(canonical);
+    result.timestampISO = new Date(result.timestampMs).toISOString();
+  }
+  return result;
+}
+
+/* ---- formatting presets ---------------------------------------------- */
+function formatUuid(canonical, opts) {
+  opts = opts || {};
+  var s = canonical;
+  if (opts.noHyphens) s = s.replace(/-/g, '');
+  if (opts.uppercase) s = s.toUpperCase();
+  if (opts.braces) s = '{' + s + '}';
+  return s;
+}
+
+/* ---- bulk / dedupe ----------------------------------------------------- */
+function generateBulk(count, version, rng, nowMs) {
+  count = Math.max(0, Math.min(100000, Math.floor(count)));
+  var out = new Array(count);
+  for (var i = 0; i < count; i++) {
+    out[i] = version === 7 ? generateV7(rng, nowMs) : generateV4(rng);
+  }
+  return out;
+}
+
+function dedupeCheck(list) {
+  var seen = {};
+  var unique = [];
+  var dup = 0;
+  for (var i = 0; i < list.length; i++) {
+    var v = list[i];
+    if (seen[v]) { dup++; } else { seen[v] = true; unique.push(v); }
+  }
+  return { total: list.length, unique: unique.length, duplicates: dup, list: unique };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    generateV4: generateV4, generateV7: generateV7,
+    canonicalize: canonicalize, analyze: analyze,
+    formatUuid: formatUuid, generateBulk: generateBulk, dedupeCheck: dedupeCheck,
+    v7TimestampMs: v7TimestampMs, versionName: versionName, variantInfo: variantInfo
+  };
+}
+
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var L = window.__uuidmint || (typeof module !== 'undefined' ? null : null);
+  // lib functions are defined in the inlined script above (globals in browser)
+  var state = { version: 4, preset: 'canonical', current: null, bulk: [] };
+
+  function fmt(u) {
+    var opts = {};
+    if (state.preset === 'uppercase') opts.uppercase = true;
+    if (state.preset === 'braces') opts.braces = true;
+    if (state.preset === 'nohyphens') opts.noHyphens = true;
+    return formatUuid(u, opts);
+  }
+
+  function mint() {
+    var u = state.version === 7 ? generateV7() : generateV4();
+    state.current = u;
+    document.getElementById('heroUuid').textContent = fmt(u);
+    var a = analyze(u);
+    var meta = 'version ' + a.version + ' · variant: ' + a.variantLabel;
+    if (a.timestampISO) meta += ' · minted ' + a.timestampISO;
+    document.getElementById('heroMeta').textContent = meta;
+  }
+
+  function copyText(t, btn, doneLabel) {
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = doneLabel || '✓ Copied!';
+      setTimeout(function () { btn.textContent = old; }, 1600);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, function () { fallback(); });
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  /* tabs */
+  var tabbtns = document.querySelectorAll('.tabbtn');
+  tabbtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabbtns.forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      document.querySelectorAll('.tabpane').forEach(function (p) { p.classList.add('hidden'); });
+      document.getElementById('tab-' + b.dataset.tab).classList.remove('hidden');
+    });
+  });
+
+  /* version + presets */
+  document.querySelectorAll('.verbtn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.verbtn').forEach(function (x) {
+        x.classList.remove('bg-tealbrand', 'text-white');
+        x.classList.add('bg-white/10', 'text-teal-100');
+      });
+      b.classList.add('bg-tealbrand', 'text-white');
+      b.classList.remove('bg-white/10', 'text-teal-100');
+      state.version = parseInt(b.dataset.ver, 10);
+      if (state.current) document.getElementById('heroUuid').textContent = fmt(state.current);
+    });
+  });
+  document.querySelectorAll('.presetbtn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.presetbtn').forEach(function (x) {
+        x.classList.remove('bg-tealbrand', 'text-white');
+        x.classList.add('bg-white/10', 'text-teal-100');
+      });
+      b.classList.add('bg-tealbrand', 'text-white');
+      b.classList.remove('bg-white/10', 'text-teal-100');
+      state.preset = b.dataset.preset;
+      if (state.current) document.getElementById('heroUuid').textContent = fmt(state.current);
+    });
+  });
+
+  document.getElementById('btnMint').addEventListener('click', mint);
+  document.getElementById('btnCopyHero').addEventListener('click', function () {
+    if (!state.current) { mint(); }
+    copyText(fmt(state.current), this);
+  });
+
+  /* sort demo */
+  document.getElementById('btnSortDemo').addEventListener('click', function () {
+    var v7 = [], v4 = [], i;
+    for (i = 0; i < 8; i++) v7.push(generateV7());
+    for (i = 0; i < 8; i++) v4.push(generateV4());
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    shuffle(v7); shuffle(v4);
+    var v7sorted = v7.slice().sort();
+    var v4sorted = v4.slice().sort();
+    var v7ol = document.getElementById('v7List');
+    var v4ol = document.getElementById('v4List');
+    v7ol.innerHTML = ''; v4ol.innerHTML = '';
+    v7sorted.forEach(function (u) {
+      var a = analyze(u);
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="text-teal-700 font-bold">' + u + '</span><br><span class="text-slate-500">' + a.timestampISO + '</span>';
+      v7ol.appendChild(li);
+    });
+    v4sorted.forEach(function (u) {
+      var li = document.createElement('li');
+      li.textContent = u;
+      li.className = 'text-slate-600';
+      v4ol.appendChild(li);
+    });
+    // verdict: v7 sorted order must equal chronological order (timestamp of each)
+    var ts = v7sorted.map(function (u) { return analyze(u).timestampMs; });
+    var chrono = true;
+    for (i = 1; i < ts.length; i++) if (ts[i] < ts[i - 1]) chrono = false;
+    var verdict = document.getElementById('sortVerdict');
+    if (chrono) {
+      verdict.className = 'mt-4 text-sm font-semibold rounded-xl px-4 py-3 bg-mintcard text-teal-900';
+      verdict.textContent = '✅ v7 sorted as plain strings lands in exact creation order — timestamps increase down the list. v4 stays random. This is why databases love v7 primary keys.';
+    } else {
+      verdict.className = 'mt-4 text-sm font-semibold rounded-xl px-4 py-3 bg-amber-100 text-amber-900';
+      verdict.textContent = '⚠ Two v7s were minted within the same millisecond, so their relative order is random (expected within one ms tick). Generate again or note: ordering holds across different milliseconds.';
+    }
+    document.getElementById('sortDemoOut').classList.remove('hidden');
+  });
+
+  /* bulk */
+  document.getElementById('btnBulkGen').addEventListener('click', function () {
+    var n = parseInt(document.getElementById('bulkCount').value, 10);
+    if (isNaN(n) || n < 1) n = 1;
+    if (n > 10000) n = 10000;
+    document.getElementById('bulkCount').value = n;
+    var ver = parseInt(document.getElementById('bulkVer').value, 10);
+    var btn = this;
+    btn.disabled = true; btn.textContent = '⏳ Minting…';
+    setTimeout(function () {
+      var list = generateBulk(n, ver);
+      var check = dedupeCheck(list);
+      state.bulk = check.list;
+      document.getElementById('bulkOut').value = check.list.join('\n');
+      var rep = document.getElementById('bulkReport');
+      rep.classList.remove('hidden');
+      rep.innerHTML =
+        card(check.total, 'Generated') + card(check.unique, 'Unique') + card(check.duplicates, check.duplicates === 0 ? 'Duplicates — none ✅' : 'Duplicates ⚠');
+      btn.disabled = false; btn.textContent = '⚡ Generate';
+    }, 30);
+    function card(v, label) {
+      var good = label.indexOf('none') !== -1;
+      return '<div class="rounded-xl border-2 ' + (good ? 'border-teal-300 bg-mintcard' : 'border-teal-100 bg-mintbg/60') + ' p-3">' +
+        '<div class="text-2xl font-extrabold text-darkbrand mono">' + v.toLocaleString('en-US') + '</div>' +
+        '<div class="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-1">' + label + '</div></div>';
+    }
+  });
+  document.getElementById('btnBulkCopy').addEventListener('click', function () {
+    var t = document.getElementById('bulkOut').value;
+    if (!t) return;
+    copyText(t, this, '✓ Copied ' + state.bulk.length + ' UUIDs!');
+  });
+  document.getElementById('btnBulkDownload').addEventListener('click', function () {
+    var t = document.getElementById('bulkOut').value;
+    if (!t) return;
+    var blob = new Blob([t], { type: 'text/plain' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'uuidmint-batch.txt';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  });
+  document.getElementById('btnBulkClear').addEventListener('click', function () {
+    document.getElementById('bulkOut').value = '';
+    document.getElementById('bulkReport').classList.add('hidden');
+    state.bulk = [];
+  });
+
+  /* validator */
+  function renderAnalysis(a) {
+    var div = document.createElement('div');
+    if (!a.valid) {
+      div.className = 'rounded-xl border-2 border-red-200 bg-red-50 p-4';
+      div.innerHTML = '<div class="flex items-start gap-3">' +
+        '<span class="text-xl">❌</span><div><div class="mono text-sm break-all font-bold text-red-800">' + esc(a.input || '(empty)') + '</div>' +
+        '<div class="text-sm text-red-700 mt-1">Invalid — ' + esc(a.reason) + '</div></div></div>';
+      return div;
+    }
+    var badge = a.isNil
+      ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-700 text-white">NIL UUID</span>'
+      : '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-tealbrand text-white">VALID</span>';
+    var tsRow = a.timestampISO
+      ? '<div class="text-xs text-slate-600 mt-1">🕒 Embedded v7 timestamp: <span class="mono font-bold">' + a.timestampISO + '</span> <span class="text-slate-400">(' + a.timestampMs + ' ms)</span></div>'
+      : '';
+    div.className = 'rounded-xl border-2 ' + (a.isNil ? 'border-slate-300 bg-slate-50' : 'border-teal-200 bg-mintbg/60') + ' p-4';
+    div.innerHTML = '<div class="flex items-start justify-between gap-3 flex-wrap">' +
+      '<div class="mono text-sm break-all font-bold text-darkbrand">' + esc(a.canonical) + '</div>' + badge + '</div>' +
+      '<div class="mt-2 grid sm:grid-cols-3 gap-2 text-xs">' +
+      '<div class="bg-white rounded-lg p-2 border border-teal-100"><span class="font-bold text-slate-500 uppercase tracking-wide">Version</span><br><span class="font-bold text-darkbrand">' + esc(a.versionLabel) + '</span></div>' +
+      '<div class="bg-white rounded-lg p-2 border border-teal-100"><span class="font-bold text-slate-500 uppercase tracking-wide">Variant</span><br><span class="font-bold text-darkbrand">' + esc(a.variantLabel) + '</span></div>' +
+      '<div class="bg-white rounded-lg p-2 border border-teal-100"><span class="font-bold text-slate-500 uppercase tracking-wide">Nil status</span><br><span class="font-bold text-darkbrand">' + (a.isNil ? 'Yes — all zeros' : 'No') + '</span></div>' +
+      '</div>' + tsRow;
+    return div;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  document.getElementById('btnValidate').addEventListener('click', function () {
+    var raw = document.getElementById('valInput').value;
+    var out = document.getElementById('valOut');
+    out.innerHTML = '';
+    var lines = raw.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+    if (lines.length === 0) {
+      out.innerHTML = '<div class="rounded-xl border-2 border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Paste at least one UUID above, then hit Validate.</div>';
+      return;
+    }
+    if (lines.length > 500) lines = lines.slice(0, 500);
+    var validN = 0;
+    lines.forEach(function (l) {
+      var a = analyze(l);
+      if (a.valid) validN++;
+      out.appendChild(renderAnalysis(a));
+    });
+    var summary = document.createElement('div');
+    summary.className = 'text-sm font-bold text-darkbrand bg-mintcard rounded-xl px-4 py-2.5';
+    summary.textContent = 'Checked ' + lines.length + ' value' + (lines.length === 1 ? '' : 's') + ' — ' + validN + ' valid, ' + (lines.length - validN) + ' invalid.';
+    out.insertBefore(summary, out.firstChild);
+  });
+  document.getElementById('btnValSample').addEventListener('click', function () {
+    document.getElementById('valInput').value = [
+      '550e8400-e29b-41d4-a716-446655440000',
+      '{6EC0BD7F-11C0-43DA-975E-2A8AD9EBCE0B}',
+      '0195a020-c000-7c4e-aa8f-2bc28a514cfb',
+      '00000000-0000-0000-0000-000000000000',
+      'not-a-uuid-at-all',
+      '123e4567-e89b-42d3-a456-426614174000'
+    ].join('\n');
+  });
+  document.getElementById('btnValClear').addEventListener('click', function () {
+    document.getElementById('valInput').value = '';
+    document.getElementById('valOut').innerHTML = '';
+  });
+
+  /* mint one on load so the hero is never empty */
+  mint();
+})();
+</script>
+</body>
+</html>
